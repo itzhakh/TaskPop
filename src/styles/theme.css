@@ -1,0 +1,92 @@
+:root {
+  --bg: #0f1115;
+  --surface: #151922;
+  --surface-2: #1A2030;
+  --text: #e7eaf0;
+  --muted: #a9b1c0;
+  --accent: #6aa1ff;
+  --success: #4cc38a;
+  --danger: #ff6b6b;
+  --warning: #f7c948;
+  --shadow: 0 6px 16px rgba(0,0,0,.25);
+  --radius: 12px;
+}
+
+[data-theme="light"] {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #f4f6fb;
+  --text: #1c2430;
+  --muted: #5b6574;
+  --accent: #3b82f6;
+  --success: #16a34a;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
+/* High contrast tweak */
+.high-contrast {
+  --accent: #ff8c00;
+  --surface-2: color-mix(in oklab, var(--surface), white 3%);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.container {
+  width: min(1200px, 94%);
+  margin-inline: auto;
+}
+
+.elevated { box-shadow: var(--shadow); }
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted);
+  font-size: 12px; font-weight: 600;
+}
+
+.muted { color: var(--muted); }
+.accent { color: var(--accent); }
+.danger { color: var(--danger); }
+.success { color: var(--success); }
+
+.button {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid transparent;
+  padding: 8px 12px; border-radius: 10px;
+  transition: transform .06s ease, background .15s ease, border-color .15s ease;
+}
+.button:hover { background: var(--surface-2); }
+.button:active { transform: translateY(1px); }
+.button.primary { background: var(--accent); color: white; }
+.button.ghost { background: transparent; border-color: var(--surface-2); }
+.button.danger { background: var(--danger); color: #fff; }
+
+.input, .textarea, .select {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 10px; padding: 10px 12px;
+  color: var(--text);
+}
+.textarea { min-height: 120px; resize: vertical; }
+
+.divider { height: 1px; background: var(--surface-2); margin: 12px 0; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
+}
+
