@@ -1,6 +1,7 @@
 <template>
   <article
     class="task card"
+    :class="statusClass"
     :data-id="task.id"
     :aria-label="`Task ${task.title}`"
     role="listitem"
@@ -36,6 +37,16 @@ const totalAC = computed(() => props.task.acceptanceCriteria?.length || 0);
 const doneAC = computed(() => props.task.acceptanceCriteria?.filter(a => a.done).length || 0);
 const shortUpdated = computed(() => formatDateTime(props.task.updatedAt));
 
+const statusClass = computed(() => {
+  const map = {
+    todo: 'status-todo',
+    inprogress: 'status-inprogress',
+    blocked: 'status-blocked',
+    done: 'status-done',
+  };
+  return map[props.task.status] || '';
+});
+
   function onDragStart(e) {
     const data = { id: props.task.id };
     e.dataTransfer?.setData('application/json', JSON.stringify(data));
@@ -52,4 +63,10 @@ const shortUpdated = computed(() => formatDateTime(props.task.updatedAt));
 .muted { font-size: 12px; }
 .icon { background: transparent; border: none; color: var(--muted); font-size: 14px; padding: 2px 4px; }
 .task:hover .icon { color: var(--text); }
+
+/* Status tints: subtle backgrounds with readable contrast */
+.task.status-todo { background: color-mix(in oklab, var(--surface), var(--success) 8%); border-color: color-mix(in oklab, var(--surface-2), var(--success) 25%); }
+.task.status-inprogress { background: color-mix(in oklab, var(--surface), var(--accent) 8%); border-color: color-mix(in oklab, var(--surface-2), var(--accent) 25%); }
+.task.status-blocked { background: color-mix(in oklab, var(--surface), var(--danger) 8%); border-color: color-mix(in oklab, var(--surface-2), var(--danger) 25%); }
+.task.status-done { background: color-mix(in oklab, var(--surface), var(--muted) 6%); border-color: color-mix(in oklab, var(--surface-2), var(--muted) 25%); }
 </style>

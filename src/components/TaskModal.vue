@@ -138,29 +138,57 @@ function mdToHtml(s) {
 }
 const rendered = computed(() => mdToHtml(draft.description || ''));
 
+function normalizeEditable(t) {
+  return {
+    title: t.title || '',
+    description: t.description || '',
+    assignee: t.assignee || '',
+    status: t.status || 'todo',
+    acceptanceCriteria: (t.acceptanceCriteria || []).map((a) => ({ id: a.id, text: a.text || '', done: !!a.done })),
+    comments: (t.comments || []).map((c) => ({ id: c.id, author: c.author || '', text: c.text || '' })),
+  };
+}
+
 function isDirty() {
-  if (isNew.value) return !!(draft.title || draft.description || draft.assignee);
-  const orig = JSON.stringify(store.byId(props.task.id));
-  const cur = JSON.stringify({ ...draft, id: props.task.id });
-  return orig !== cur;
+  if (isNew.value) {
+    // New task: dirty if any editable field filled
+    const cur = normalizeEditable(draft);
+    return !!(cur.title || cur.description || cur.assignee || cur.acceptanceCriteria.length || cur.comments.length || cur.status !== 'todo');
+  }
+  const original = normalizeEditable(store.byId(props.task.id) || {});
+  const current = normalizeEditable(draft);
+  return JSON.stringify(original) !== JSON.stringify(current);
 }
 
 onMounted(() => {
-  window.onbeforeunload = () => isDirty() ? 'You have unsaved changes' : null;
+  const handler = (e) => {
+    if (isDirty()) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+    return null;
+  };
+  window.addEventListener('beforeunload', handler);
+  // Watch draft for changes to dynamically toggle handler
+  const stop = watch(() => JSON.stringify(normalizeEditable(draft)), () => {
+    // No-op: handler checks isDirty at runtime; keeping for reactivity if needed
+  });
+  onBeforeUnmount(() => { stop(); window.removeEventListener('beforeunload', handler); });
 });
-onBeforeUnmount(() => { window.onbeforeunload = null; });
+onBeforeUnmount(() => { /* handled above */ });
 </script>
 
 <style scoped>
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: grid; justify-items: end; z-index: 30; }
-.drawer { width: min(720px, 100%); height: 100%; background: var(--bg); border-radius: 0; border-left: 1px solid var(--surface-2); display: grid; grid-template-rows: auto 1fr auto; }
+.drawer { width: min(720px, 100%); height: 100%; background: var(--bg); border-radius: 0; border-left: 1px solid var(--surface-2); display: grid; grid-template-rows: auto 1fr auto; overflow-y: auto; }
 .bar { display: flex; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--surface-2); }
 .bar:last-child { border-top: 1px solid var(--surface-2); border-bottom: none; }
 .spacer { flex: 1; }
-.content { padding: 12px; overflow: auto; display: grid; gap: 14px; }
+.content { padding: 12px; display: grid; gap: 14px; }
 .section { display: grid; gap: 6px; }
 .lbl { font-size: 12px; color: var(--muted); }
 .md { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.preview { padding: 10px; border-radius: 10px; border: 1px solid var(--surface-2); background: var(--surface); min-height: 120px; overflow: auto; }
+.preview { padding: 10px; border-radius: 10px; border: 1px solid var(--surface-2); background: var(--surface); min-height: 120px; }
 @media (max-width: 800px) { .md { grid-template-columns: 1fr; } .drawer { width: 100%; } }
 </style>
