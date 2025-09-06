@@ -14,9 +14,10 @@
     <div
       class="list"
       role="list"
-      :class="{ over: overIndex != null }"
+      :class="[{ over: overIndex != null }, statusClass]"
       @dragover.prevent
       @dragenter.prevent
+      @dragleave="onDragLeave"
       @drop="onDropEnd"
     >
       <template v-for="(t, i) in sorted" :key="t.id">
@@ -72,6 +73,23 @@ function onDropEnd(e) {
   }
 }
 
+const statusClass = computed(() => {
+  const map = {
+    todo: 'status-todo',
+    inprogress: 'status-inprogress',
+    blocked: 'status-blocked',
+    done: 'status-done',
+  };
+  return map[props.status] || '';
+});
+
+function onDragLeave(e) {
+  // Only clear when leaving the entire list, not moving between children
+  if (!(e.currentTarget && e.relatedTarget) || !e.currentTarget.contains(e.relatedTarget)) {
+    overIndex.value = null;
+  }
+}
+
 watch(() => props.tasks, () => { overIndex.value = null; });
 </script>
 
@@ -84,6 +102,10 @@ watch(() => props.tasks, () => { overIndex.value = null; });
 .list { display: grid; gap: 10px; padding: 6px; min-height: 120px; background: var(--surface-2); border-radius: var(--radius); border: 1px dashed transparent; }
 .list { align-content: start; justify-items: stretch; }
 .list.over { border-color: var(--accent); }
+.list.status-todo { background: color-mix(in oklab, var(--surface-2), var(--success) 6%); }
+.list.status-inprogress { background: color-mix(in oklab, var(--surface-2), var(--accent) 6%); }
+.list.status-blocked { background: color-mix(in oklab, var(--surface-2), var(--danger) 6%); }
+.list.status-done { background: color-mix(in oklab, var(--surface-2), var(--muted) 4%); }
 .dropzone { height: 0; border-radius: 8px; border: 2px dashed var(--accent); opacity: 0; margin: -2px 0; transition: opacity .12s ease; }
 .dropzone.end { height: 0; }
 .dropzone.show { opacity: .7; height: 8px; }
