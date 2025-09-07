@@ -50,6 +50,14 @@ function onKey(e) {
   const typing = ['input', 'textarea'].includes(tag) || e.target.isContentEditable;
   if (e.key === '/' && !typing) { e.preventDefault(); document.getElementById('search-input')?.focus(); }
   if ((e.key === 'n' || e.key === 'N') && !typing) { e.preventDefault(); openNew(); }
+  // Undo/Redo
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const meta = isMac ? e.metaKey : e.ctrlKey;
+  if (meta && e.key.toLowerCase() === 'z' && !typing) {
+    e.preventDefault();
+    if (e.shiftKey) store.redo?.();
+    else store.undo?.();
+  }
 }
 
 onMounted(() => {

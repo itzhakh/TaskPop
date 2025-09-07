@@ -17,9 +17,56 @@ export function useTasksStore() {
 
   useAutoSave(KEY, tasks);
 
+  // History for undo/redo
+  const past = ref([]); // stack of previous snapshots
+  const future = ref([]); // stack of undone snapshots
+
+  function snapshot() {
+    // Deep clone tasks to create an immutable snapshot
+    return JSON.parse(JSON.stringify(tasks.value));
+  }
+
+  function recordHistory() {
+    try {
+      past.value.push(snapshot());
+      // avoid unbounded growth
+      const MAX = 100;
+      if (past.value.length > MAX) past.value.splice(0, past.value.length - MAX);
+      future.value = [];
+    } catch (e) {
+      console.warn('History record failed', e);
+    }
+  }
+
+  function undo() {
+    if (past.value.length === 0) return;
+    try {
+      future.value.push(snapshot());
+      const prev = past.value.pop();
+      tasks.value = prev || [];
+    } catch (e) {
+      console.warn('Undo failed', e);
+    }
+  }
+
+  function redo() {
+    if (future.value.length === 0) return;
+    try {
+      past.value.push(snapshot());
+      const next = future.value.pop();
+      tasks.value = next || [];
+    } catch (e) {
+      console.warn('Redo failed', e);
+    }
+  }
+
+  const canUndo = computed(() => past.value.length > 0);
+  const canRedo = computed(() => future.value.length > 0);
+
   const byId = (id) => tasks.value.find(t => t.id === id);
 
   function createTask(partial = {}) {
+    recordHistory();
     const now = nowISO();
     const t = {
       id: uid('t_'),
@@ -37,6 +84,7 @@ export function useTasksStore() {
   }
 
   function updateTask(id, fields) {
+    recordHistory();
     const t = byId(id);
     if (!t) return;
     Object.assign(t, fields);
@@ -44,6 +92,7 @@ export function useTasksStore() {
   }
 
   function deleteTask(id) {
+    recordHistory();
     const idx = tasks.value.findIndex(t => t.id === id);
     if (idx !== -1) tasks.value.splice(idx, 1);
   }
@@ -53,6 +102,7 @@ export function useTasksStore() {
   }
 
   function moveTask(taskId, toStatus, toIndex = undefined) {
+    recordHistory();
     const curIndex = tasks.value.findIndex(t => t.id === taskId);
     if (curIndex === -1) return;
     const task = tasks.value[curIndex];
@@ -87,6 +137,7 @@ export function useTasksStore() {
   }
 
   function reorderWithin(status, fromIndex, toIndex) {
+    recordHistory();
     const list = tasks.value.filter(t => t.status === status);
     if (fromIndex < 0 || toIndex < 0 || fromIndex >= list.length || toIndex > list.length) return;
     const item = list[fromIndex];
@@ -94,22 +145,26 @@ export function useTasksStore() {
   }
 
   function addAC(taskId, text) {
+    recordHistory();
     const t = byId(taskId); if (!t) return;
     t.acceptanceCriteria.push({ id: uid('ac_'), text, done: false });
     t.updatedAt = nowISO();
   }
   function toggleAC(taskId, acId) {
+    recordHistory();
     const t = byId(taskId); if (!t) return;
     const ac = t.acceptanceCriteria.find(a => a.id === acId);
     if (ac) { ac.done = !ac.done; t.updatedAt = nowISO(); }
   }
   function removeAC(taskId, acId) {
+    recordHistory();
     const t = byId(taskId); if (!t) return;
     const i = t.acceptanceCriteria.findIndex(a => a.id === acId);
     if (i !== -1) { t.acceptanceCriteria.splice(i, 1); t.updatedAt = nowISO(); }
   }
 
   function addComment(taskId, { author, text }) {
+    recordHistory();
     const t = byId(taskId); if (!t) return;
     t.comments.unshift({ id: uid('c_'), author: author || 'Anon', text, createdAt: nowISO() });
     t.updatedAt = nowISO();
@@ -138,6 +193,7 @@ export function useTasksStore() {
 
   function importJSON(json) {
     try {
+      recordHistory();
       const data = typeof json === 'string' ? JSON.parse(json) : json;
       if (!data || !Array.isArray(data.tasks)) return false;
       const result = tasks.value.slice();
@@ -170,6 +226,8 @@ export function useTasksStore() {
     exportJSON, importJSON,
     assignees,
     byId,
+    undo, redo,
+    canUndo, canRedo,
   };
   return singleton;
 }
