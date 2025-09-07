@@ -20,7 +20,13 @@
           <option value="all">All assignees</option>
           <option v-for="a in assignees" :key="a" :value="a">{{ a }}</option>
         </select>
+        <button class="button" :disabled="!canUndo" @click="onUndo" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+        <button class="button" :disabled="!canRedo" @click="onRedo" title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
+        <button class="button" @click="onExport" title="Export JSON">Export</button>
+        <label class="button ghost" for="import-input" title="Import JSON">Import</label>
+        <input id="import-input" ref="importEl" type="file" accept="application/json" @change="onImport" class="sr-only" />
         <button class="button primary" @click="$emit('new')" aria-label="New task (N)">＋ New</button>
+        <button class="button" @click="$emit('help')" title="Keyboard shortcuts (?)">Help</button>
         <button class="button ghost" @click="toggleTheme" aria-label="Toggle light/dark">
           {{ themeLabel }}
         </button>
@@ -59,6 +65,36 @@ onMounted(() => {
   const theme = localStorage.getItem('minikanban/theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
 });
+
+// Undo/Redo integration
+const canUndo = computed(() => store.canUndo?.value ?? false);
+const canRedo = computed(() => store.canRedo?.value ?? false);
+function onUndo() { store.undo?.(); }
+function onRedo() { store.redo?.(); }
+
+// Export / Import
+const importEl = ref(null);
+function onExport() {
+  try {
+    const json = store.exportJSON();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `taskpop-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  } catch (e) { console.warn('Export failed', e); }
+}
+function onImport(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const ok = store.importJSON(reader.result);
+    if (!ok) alert('Import failed: invalid file');
+    if (importEl.value) importEl.value.value = '';
+  };
+  reader.readAsText(file);
+}
 </script>
 
 <style scoped>

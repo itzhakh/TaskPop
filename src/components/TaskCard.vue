@@ -22,6 +22,9 @@
       <span class="muted ac">AC {{ doneAC }}/{{ totalAC }}</span>
       <span class="muted time">Updated {{ shortUpdated }}</span>
     </div>
+    <div v-if="totalAC > 0" class="progress" :aria-label="`Acceptance progress ${progressPct}%`" role="progressbar" :aria-valuenow="progressPct" aria-valuemin="0" aria-valuemax="100">
+      <div class="bar" :style="{ width: progressPct + '%' }" :class="{ complete: progressPct === 100 }"></div>
+    </div>
   </article>
 </template>
 
@@ -35,6 +38,7 @@ const emit = defineEmits(['open', 'moveNext', 'markDone']);
 const totalAC = computed(() => props.task.acceptanceCriteria?.length || 0);
 const doneAC = computed(() => props.task.acceptanceCriteria?.filter(a => a.done).length || 0);
 const shortUpdated = computed(() => formatDateTime(props.task.updatedAt));
+const progressPct = computed(() => totalAC.value === 0 ? 0 : Math.round((doneAC.value / totalAC.value) * 100));
 
   function onDragStart(e) {
     const data = { id: props.task.id };
@@ -52,4 +56,7 @@ const shortUpdated = computed(() => formatDateTime(props.task.updatedAt));
 .muted { font-size: 12px; }
 .icon { background: transparent; border: none; color: var(--muted); font-size: 14px; padding: 2px 4px; }
 .task:hover .icon { color: var(--text); }
+.progress { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bar { height: 100%; background: var(--accent); transition: width .15s ease; }
+.bar.complete { background: var(--success); }
 </style>
