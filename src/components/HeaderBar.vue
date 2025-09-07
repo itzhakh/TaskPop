@@ -56,7 +56,7 @@ function toggleTheme() {
   localStorage.setItem('minikanban/theme', next);
 }
 onMounted(() => {
-  const theme = localStorage.getItem('minikanban/theme') || 'dark';
+  const theme = localStorage.getItem('minikanban/theme') || 'light';
   document.documentElement.setAttribute('data-theme', theme);
 });
 </script>
