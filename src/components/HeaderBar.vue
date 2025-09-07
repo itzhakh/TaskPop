@@ -26,6 +26,7 @@
         <label class="button ghost" for="import-input" title="Import JSON">Import</label>
         <input id="import-input" ref="importEl" type="file" accept="application/json" @change="onImport" class="sr-only" />
         <button class="button primary" @click="$emit('new')" aria-label="New task (N)">＋ New</button>
+        <button class="button" @click="$emit('help')" title="Keyboard shortcuts (?)">Help</button>
         <button class="button ghost" @click="toggleTheme" aria-label="Toggle light/dark">
           {{ themeLabel }}
         </button>
