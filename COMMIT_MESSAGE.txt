@@ -1,0 +1,12 @@
+feat: Switch to light theme for improved accessibility and readability
+
+- Activate light theme by setting data-theme="light" on document root
+- Utilizes existing light theme CSS variables in styles/theme.css
+- Improves contrast ratios and accessibility compliance
+- Provides better user experience in well-lit environments
+
+The light theme was already defined in the CSS but not activated.
+This change simply enables it application-wide from app initialization.
+
+Changes:
+- src/main.js: Add theme activation with documentation comments
